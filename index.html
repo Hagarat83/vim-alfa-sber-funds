@@ -450,7 +450,6 @@ const HORIZONS = [
   { key: "ytd", label: "YTD 2025" },
 ];
 const PROVIDERS = ["vim", "alfa", "sber"];
-const PROVIDER_SHORT = { vim: "ВИМ", alfa: "Альфа", sber: "Первая" };
 
 function bestForProvider(cls, provider, horizonKey) {
   const rows = DATA.filter(d => d.cls === cls && d.provider === provider && d[horizonKey] != null);
