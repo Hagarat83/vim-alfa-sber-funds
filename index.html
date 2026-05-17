@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>ПИФ ВИМ Инвестиции vs Альфа-Капитал — сравнительный анализ</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --ink: #1a1d24;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --vim: #1f6feb;
+    --alfa: #d22b3a;
+    --sber: #1d8a4a;
+    --bench: #6b7280;
+    --hurdle-dep: #f59e0b;
+    --hurdle-inf: #9ca3af;
+    --acc-stocks: #2563eb;
+    --acc-bonds: #16a34a;
+    --acc-mixed: #9333ea;
+    --acc-money: #0891b2;
+    --good: #16a34a;
+    --bad: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14.5px; line-height: 1.45; }
+  .page { max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
+  .hdr { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+    border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 22px; }
+  .hdr h1 { margin: 0 0 4px; font-size: 26px; line-height: 1.2; font-weight: 700; }
+  .hdr .sub { color: var(--muted); font-size: 14px; }
+  .hdr .meta { text-align: right; color: var(--muted); font-size: 12.5px; min-width: 200px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+  .card h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; letter-spacing: 0.1px; }
+  .card h2 .pill { font-size: 11px; font-weight: 500; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--line); padding: 2px 8px;
+    border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .tldr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; }
+  .tldr .item { padding: 8px 10px 8px 16px; border-left: 3px solid var(--vim); }
+  .tldr .item.b { border-left-color: var(--alfa); }
+  .tldr .item.c { border-left-color: var(--acc-bonds); }
+  .tldr .item.d { border-left-color: var(--hurdle-dep); }
+  .tldr .item.e { border-left-color: var(--acc-mixed); grid-column: span 2; }
+  .tldr .item b { display: block; margin-bottom: 2px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .tabs button { background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--ink);
+    font-family: inherit; transition: background 0.12s, border-color 0.12s; }
+  .tabs button:hover { background: #eef2f7; }
+  .tabs button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .legend-inline { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .legend-inline span { display: inline-flex; align-items: center; gap: 6px; margin-left: 14px; }
+  .legend-inline .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .legend-inline .dot.vim { background: var(--vim); }
+  .legend-inline .dot.alfa { background: var(--alfa); }
+  .legend-inline .dot.sber { background: var(--sber); }
+  .legend-inline .dot.market { background: #9333ea; }
+  .legend-inline .dot.bench { background: var(--bench); }
+  .legend-inline .ln { width: 18px; border-top: 2px dashed var(--hurdle-dep); display: inline-block; }
+  .legend-inline .ln.inf { border-top-color: var(--hurdle-inf); }
+  .tab-bar { display: flex; align-items: center; }
+  .scorecard table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .scorecard th, .scorecard td { padding: 8px 10px; text-align: left;
+    border-bottom: 1px solid var(--line); }
+  .scorecard th { font-weight: 600; color: var(--muted); font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .scorecard td.win-vim { color: var(--vim); font-weight: 600; }
+  .scorecard td.win-alfa { color: var(--alfa); font-weight: 600; }
+  .scorecard td.win-sber { color: var(--sber); font-weight: 600; }
+  .scorecard td.win-market { color: #9333ea; font-weight: 600; }
+  .scorecard td.tie { color: var(--muted); }
+  .scorecard td .fund { display: block; font-weight: 400; font-size: 11px; color: var(--muted); margin-top: 1px; line-height: 1.2; }
+  .scorecard td .delta { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; }
+  .data-table { font-size: 12.5px; width: 100%; border-collapse: collapse; }
+  .data-table th, .data-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  .data-table th { background: #f3f4f6; text-align: left; font-weight: 600; cursor: pointer;
+    user-select: none; position: sticky; top: 0; }
+  .data-table th.num, .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-table tr.benchmark { background: #fffbeb; font-weight: 600; }
+  .data-table tr.benchmark td.name::before { content: "◆ "; color: var(--hurdle-dep); }
+  .data-table tr.hurdle { background: #f3f4f6; font-style: italic; }
+  .data-table tr.group td { background: var(--ink); color: #fff; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; font-size: 11.5px; padding: 6px 10px; }
+  .data-table td.provider { font-size: 11px; color: var(--muted); }
+  .data-table td.provider.vim { color: var(--vim); font-weight: 600; }
+  .data-table td.provider.sber { color: var(--sber); font-weight: 600; }
+  .data-table td.provider.market { color: #9333ea; font-weight: 600; }
+  .data-table tr.champion { background: linear-gradient(90deg, rgba(245,158,11,0.10) 0%, rgba(245,158,11,0) 50%); }
+  .data-table tr.champion td.name::after { content: " ★"; color: var(--hurdle-dep); font-weight: 700; }
+  .data-table td.provider.alfa { color: var(--alfa); font-weight: 600; }
+  .footer { color: var(--muted); font-size: 11.5px; line-height: 1.6;
+    padding-top: 14px; border-top: 1px solid var(--line); margin-top: 14px; }
+  .footer b { color: var(--ink); }
+  .chart { width: 100%; }
+  .heatmap-wrap, .hurdle-wrap { min-height: 380px; }
+  @media (max-width: 720px) {
+    .tldr { grid-template-columns: 1fr; }
+    .tldr .item.e { grid-column: span 1; }
+    .hdr { flex-direction: column; align-items: flex-start; }
+    .hdr .meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <div>
+      <h1>Сравнительный анализ ПИФ ВИМ Инвестиции vs Альфа-Капитал vs Первая (Сбер)</h1>
+      <div class="sub">Горизонты: 5 лет (с 11.05.2021), 3 года (с 11.05.2023), YTD 2025 (по 07.05.2026)</div>
+    </div>
+    <div class="meta">
+      Отчёт от 17.05.2026<br/>
+      24 инструмента · 4 класса активов · 3 УК<br/>
+      Источники: investfunds.ru, tradingview.com
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Главный вывод <span class="pill">TL;DR</span></h2>
+    <div class="tldr">
+      <div class="item">
+        <b>На 5 лет ВИМ опережает Альфу like-for-like в каждом классе.</b>
+        ОПИФ vs ОПИФ: акции 16,4% vs 6,6%, сбалансированные 55,1% vs 27,3%, облигации 51–83% vs 51–67%. БПИФ Ликвидность 86,8% vs RUSFAR 92,1% — трекинг хороший, комиссия съедает альфу.
+      </div>
+      <div class="item">
+        <b>На 3 года ВИМ удерживает лучший фонд во ВСЕХ четырёх классах.</b>
+        Российские эмитенты 80,5% vs Альфа Управляемые акции 73,0% (+7,5 пп); БПИФ Российские облигации 53,8% vs Альфа Облигации 48,3% (+5,6 пп); Сбалансированный 49,0% vs Альфа Баланс 45,9% (+3,0 пп); Ликвидность 61,0% vs Альфа Денежный рынок 59,1% (+1,9 пп). Тезиса об «инверсии на 3-летнем горизонте» в данных нет.
+      </div>
+      <div class="item b">
+        <b>Единственное реальное преимущество Альфы — БПИФ Управляемые акции на 5 лет.</b>
+        Активный БПИФ Альфа-Капитал Управляемые акции дал 54,7% и обыграл MCFTR на +43,5 пп; прямого аналога-БПИФ с активным управлением у ВИМ нет (только индексный трекер с −1,3%). В 2025 YTD у Альфы крошечные перевесы: +0,4 пп на облигациях, +0,9 пп на смешанных; на акциях ВИМ +15,8 пп, по денежному рынку — ничья.
+      </div>
+      <div class="item c">
+        <b>Банковский депозит ТОП-10 (95,9% за 5л) — реальный hurdle, и его обыгрывают единицы.</b>
+        На 5-летнем горизонте депозит превзошли только облигационные и денежные фонды ВИМ. Этот факт оригинальный отчёт прячет в одной строке.
+      </div>
+      <div class="item e">
+        <b>Методология:</b> сравнивать фонды по риск-скорректированной доходности относительно их собственного бенчмарка (MCFTR / RGBITR / RUSFAR) на едином горизонте; ТОП-10 депозит указывать как hurdle, а не как сноску. Это и есть структура ниже.
+      </div>
+    </div>
+  </div>
+
+  <div class="card scorecard">
+    <h2>Парный скоркард: ВИМ ↔ Альфа ↔ Первая <span class="pill">лучший фонд провайдера в классе × горизонте</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Класс активов</th>
+          <th>5 лет (общая)</th>
+          <th>3 года (общая)</th>
+          <th>YTD 2025</th>
+        </tr>
+      </thead>
+      <tbody id="scorecard-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="tab-bar">
+      <h2 style="margin-right:14px;">Hurdle race: доходность фондов против инфляции и депозита</h2>
+      <div class="tabs" id="hurdle-tabs">
+        <button data-h="cagr5" class="active">5-летний CAGR</button>
+        <button data-h="cum5">5-летний накопленный</button>
+        <button data-h="cum3">3-летний накопленный</button>
+        <button data-h="ytd25">YTD 2025</button>
+      </div>
+    </div>
+    <div class="legend-inline" style="margin: 0 0 6px 0;">
+      <span><span class="dot vim"></span>ВИМ Инвестиции</span>
+      <span><span class="dot alfa"></span>Альфа-Капитал</span>
+      <span><span class="dot sber"></span>Первая (Сбер)</span>
+      <span><span class="dot market"></span>Лидер рынка</span>
+      <span><span class="dot bench"></span>Бенчмарк</span>
+      <span><span class="ln"></span>Депозит ТОП-10</span>
+      <span><span class="ln inf"></span>Инфляция</span>
+    </div>
+    <div id="hurdle-chart" class="chart hurdle-wrap"></div>
+  </div>
+
+  <div class="card scorecard">
+    <h2>Champion table — лидер в каждом классе × горизонте <span class="pill">ВИМ / Альфа / Первая (Сбер) / шире рынка</span></h2>
+    <div style="color:var(--muted); font-size:12px; margin-bottom:8px;">
+      Абсолютный лидер среди всех учтённых фондов. Помимо ВИМ / Альфа / Первая (Сбер) в выборку добавлены рыночные лидеры (ОПИФ Аленка-Капитал, ОПИФ ГЕРОИ–Рублевые перспективы). Цвет тега — провайдер; ниже — название и отрыв от ближайшего конкурента.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Класс активов</th>
+          <th>5 лет (общая)</th>
+          <th>3 года (общая)</th>
+          <th>YTD 2025</th>
+        </tr>
+      </thead>
+      <tbody id="champion-body"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Фонды против бенчмарка <span class="pill">α = фонд − индекс класса</span></h2>
+    <div style="color:var(--muted); font-size:12px; margin-bottom:8px;">
+      Бенчмарки: Акции → MCFTR, Облигации → RGBITR, Денежный рынок → RUSFAR, Смешанные → 50/50 MCFTR+RGBITR. Зелёный — фонд обыграл свой индекс, красный — отстал.
+    </div>
+    <div id="heatmap" class="chart heatmap-wrap"></div>
+  </div>
+
+  <div class="card">
+    <h2>Сводная таблица <span class="pill">26 строк · сортируемая · ★ — чемпион по 5л CAGR</span></h2>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="data-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Инструмент</th>
+            <th data-sort="provider">Провайдер</th>
+            <th class="num" data-sort="t5">Доходность 5 лет, %</th>
+            <th class="num" data-sort="c5">CAGR 5 лет, %</th>
+            <th class="num" data-sort="t3">Доходность 3 года, %</th>
+            <th class="num" data-sort="ytd">YTD 2025, %</th>
+          </tr>
+        </thead>
+        <tbody id="data-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>Методология.</b> ОПИФ и БПИФ трёх управляющих компаний (АО ВИМ Инвестиции, ООО УК Альфа-Капитал, АО УК «Первая» — экс-Сбер Управление Активами) сопоставлены с капитализационными бенчмарками индексов МосБиржи. Источники доходностей: <b>investfunds.ru</b> (карточки фондов на 14–16.05.2026) и <b>tradingview.com</b> (бенчмарки). Метод расчёта максимальной ставки капитализации сберегательных вкладов в ТОП-10 банков РФ среднего срока размещения с капитализацией процентов в трёхмесячные вклады на 11.05.2026 даёт 12,498% среднегодовой доходности вложений. Расчёт по ОПИФ на 06.05.2026; по БПИФ — на 04.05.2026. Срок 3 года — фактическая доходность по ОПИФ на 04.05.2026, по БПИФ — на 06.05.2026. Доходности рассчитаны за период с 11.05.2021 по 07.05.2026 (5 лет) и с 11.05.2023 по 07.05.2026 (3 года).
+    Для фондов УК «Первая» столбец <b>YTD 2025</b> показывает 1-летнюю rolling-доходность по investfunds.ru (май 2025 → май 2026) — самый близкий доступный из того же источника горизонт, поскольку расчёт «календарный 2025» не публикуется в карточке. БПИФ SBMM (Сберегательный) запущен в октябре 2021 — для 5-летнего столбца использована «доходность с момента входа в 5-летнее окно» по investfunds.ru.
+    Бенчмарки: <b>MCFTR</b> — Индекс МосБиржи полной доходности «брутто» с учётом дивидендов; <b>RGBITR</b> — индекс гособлигаций РФ с учётом купонов; <b>RUSFAR</b> — накопленная доходность по периодам, рассчитана средняя инфляция и доходность банковских вкладов.
+  </div>
+
+</div>
+
+<script>
+// ============ DATA ============
+// One row per instrument. Numbers are percentages (already multiplied by 100).
+// is_bench: line is a benchmark/reference, not a fund.
+// is_hurdle: inflation or deposit — drawn as vertical reference in charts, separate row at top of table.
+const DATA = [
+  // Hurdles (reference lines)
+  { name: "Инфляция (накопленная)",              cls: "Hurdle", provider: "ref", t5: 53.55, c5: 10.71, t3: 28.19, ytd: 5.59,  is_bench: false, is_hurdle: true },
+  { name: "Банковский депозит, ТОП-10 банков РФ", cls: "Hurdle", provider: "ref", t5: 95.94, c5: 19.19, t3: 55.53, ytd: 18.93, is_bench: false, is_hurdle: true },
+
+  // Stocks
+  { name: "Индекс МосБиржи (MCFTR)",                       cls: "Акции", provider: "bench", t5: 11.16, c5: 2.23,  t3: 35.91, ytd: 2.57,  is_bench: true },
+  { name: "ОПИФ ВИМ – Акции",                              cls: "Акции", provider: "vim",   t5: 16.44, c5: 3.29,  t3: 40.71, ytd: 13.98 },
+  { name: "ОПИФ ВИМ Акции – Российские эмитенты",          cls: "Акции", provider: "vim",   t5: null,  c5: null,  t3: 80.52, ytd: 8.67  },
+  { name: "ОПИФ Альфа-Капитал Ликвидные акции",            cls: "Акции", provider: "alfa",  t5: 6.63,  c5: 1.33,  t3: 44.04, ytd: 8.9   },
+  { name: "БПИФ Альфа-Капитал Управляемые акции",          cls: "Акции", provider: "alfa",  t5: 54.68, c5: 10.94, t3: 72.98, ytd: 2.7   },
+  { name: "БПИФ ВИМ – Индекс МосБиржи",                    cls: "Акции", provider: "vim",   t5: -1.3,  c5: -0.26, t3: 24.33, ytd: 24.72 },
+  { name: "ОПИФ Первая – Фонд российских акций",           cls: "Акции", provider: "sber",  t5: 44.37, c5: 7.62,  t3: 1.53,  ytd: 5.04  },
+  { name: "ОПИФ Первая – Природные ресурсы",               cls: "Акции", provider: "sber",  t5: -70.87,c5: -21.65,t3: -31.07,ytd: -16.07},
+  { name: "БПИФ Первая – Топ Российских акций (SBMX)",     cls: "Акции", provider: "sber",  t5: 27.32, c5: 4.95,  t3: -1.14, ytd: 8.26  },
+  { name: "ОПИФ Аленка-Капитал (УК Рекорд Капитал)",       cls: "Акции", provider: "market",t5: 125.14,c5: 17.65, t3: -3.64, ytd: 6.90  },
+
+  // Bonds
+  { name: "Индекс российских гособлигаций RGBITR",         cls: "Облигации", provider: "bench", t5: 29.43, c5: 5.89,  t3: 24.8,  ytd: 25.83, is_bench: true },
+  { name: "ОПИФ Альфа-Капитал Облигации Плюс",             cls: "Облигации", provider: "alfa",  t5: 51.36, c5: 10.27, t3: 40.95, ytd: 31.58 },
+  { name: "ОПИФ ВИМ – Казначейский",                       cls: "Облигации", provider: "vim",   t5: 50.93, c5: 10.19, t3: 48.05, ytd: 31.21 },
+  { name: "БПИФ Российские облигации (ВИМ Инвестиции)",    cls: "Облигации", provider: "vim",   t5: 83.33, c5: 16.67, t3: 53.82, ytd: 24.89 },
+  { name: "ОПИФ Альфа-Капитал Облигации",                  cls: "Облигации", provider: "alfa",  t5: 67.11, c5: 13.42, t3: 48.25, ytd: 22.47 },
+  { name: "ОПИФ Первая – Фонд Рублевые сбережения (Илья Муромец)", cls: "Облигации", provider: "sber", t5: 53.90, c5: 8.99,  t3: 22.85, ytd: 7.13 },
+  { name: "БПИФ Первая – Государственные облигации (SBGB)",cls: "Облигации", provider: "sber",  t5: null,  c5: null,  t3: 25.80, ytd: 21.98 },
+  { name: "ОПИФ Рублевые перспективы (УК Герои)",          cls: "Облигации", provider: "market",t5: null,  c5: null,  t3: null,  ytd: 44.43 },
+
+  // Mixed / balanced
+  { name: "ОПИФ ВИМ – Сбалансированный Консервативный",    cls: "Смешанные", provider: "vim",   t5: 55.08, c5: 11.02, t3: 48.97, ytd: 18.93 },
+  { name: "ОПИФ ВИМ – Накопительный резерв",               cls: "Смешанные", provider: "vim",   t5: 49.26, c5: 9.85,  t3: 46.08, ytd: 12.5  },
+  { name: "ОПИФ Альфа-Капитал Баланс",                     cls: "Смешанные", provider: "alfa",  t5: 27.33, c5: 5.47,  t3: 45.94, ytd: 19.83 },
+  { name: "ОПИФ Первая – Сбалансированный",                cls: "Смешанные", provider: "sber",  t5: 46.38, c5: 7.92,  t3: 8.47,  ytd: 6.05  },
+
+  // Money market
+  { name: "Индекс RUSFAR",                                  cls: "Денежный рынок", provider: "bench", t5: 92.12, c5: 18.42, t3: 61.94, ytd: 20.7,  is_bench: true },
+  { name: "БПИФ ВИМ – Ликвидность",                        cls: "Денежный рынок", provider: "vim",   t5: 86.79, c5: 17.36, t3: 61.02, ytd: 19.70 },
+  { name: "БПИФ Альфа-Капитал Денежный рынок",             cls: "Денежный рынок", provider: "alfa",  t5: null,  c5: null,  t3: 59.11, ytd: 19.70 },
+  { name: "БПИФ Первая – Сберегательный (SBMM)",           cls: "Денежный рынок", provider: "sber",  t5: null,  c5: null,  t3: 60.82, ytd: 18.01 },
+];
+
+// Benchmark per asset class for the alpha heat-map
+const BENCH = {
+  "Акции":         { t5: 11.16, t3: 35.91, ytd: 2.57  },
+  "Облигации":     { t5: 29.43, t3: 24.8,  ytd: 25.83 },
+  "Денежный рынок":{ t5: 92.12, t3: 61.94, ytd: 20.7  },
+  "Смешанные":     { t5: (11.16+29.43)/2, t3: (35.91+24.8)/2, ytd: (2.57+25.83)/2 }, // 50/50 blend
+};
+const CLASS_ORDER = ["Акции", "Облигации", "Смешанные", "Денежный рынок"];
+const PROVIDER_COLOR = { vim: "#1f6feb", alfa: "#d22b3a", sber: "#15803d", market: "#9333ea", bench: "#6b7280", ref: "#9ca3af" };
+const PROVIDER_LABEL = { vim: "ВИМ Инвестиции", alfa: "Альфа-Капитал", sber: "Первая (Сбер)", market: "Лидер рынка", bench: "Бенчмарк", ref: "Hurdle" };
+const PROVIDER_SHORT = { vim: "ВИМ", alfa: "Альфа", sber: "Первая", market: "Рынок", bench: "Бенч", ref: "Ref" };
+const HURDLE = DATA.filter(d => d.is_hurdle);
+
+// ============ HURDLE RACE CHART ============
+const HORIZON_FIELD = { cagr5: "c5", cum5: "t5", cum3: "t3", ytd25: "ytd" };
+const HORIZON_LABEL = { cagr5: "CAGR 5 лет, %", cum5: "5 лет (общая), %", cum3: "3 года (общая), %", ytd25: "YTD 2025, %" };
+
+function buildHurdle(horizon) {
+  const field = HORIZON_FIELD[horizon];
+  // Build per-class blocks, with a spacer row between classes.
+  const ys = [], xs = [], colors = [], hover = [];
+  const benchVals = []; // for class-benchmark dashed lines
+  let benchAnnotations = [];
+  CLASS_ORDER.slice().reverse().forEach(cls => {
+    // Skip funds with null OR negative returns in this horizon — hurdle race is only about positive outcomes
+    const rows = DATA.filter(d => d.cls === cls && !d.is_bench && d[field] != null && d[field] >= 0);
+    rows.sort((a,b) => a[field] - b[field]);
+    rows.forEach(r => {
+      ys.push(r.name);
+      const v = r[field];
+      xs.push(v);
+      colors.push(PROVIDER_COLOR[r.provider]);
+      hover.push(`${r.name}<br>${HORIZON_LABEL[horizon]}: ${v.toFixed(2)}%<br>Провайдер: ${PROVIDER_LABEL[r.provider]}<br>Класс: ${cls}`);
+    });
+    const bench = DATA.find(d => d.cls === cls && d.is_bench);
+    if (bench && bench[field] != null && bench[field] >= 0) {
+      ys.push(bench.name);
+      const v = bench[field];
+      xs.push(v);
+      colors.push(PROVIDER_COLOR.bench);
+      hover.push(`${bench.name}<br>${HORIZON_LABEL[horizon]}: ${v.toFixed(2)}%<br>Бенчмарк класса`);
+    }
+    if (rows.length > 0) {
+      ys.push(`— ${cls} —`);
+      xs.push(null);
+      colors.push("rgba(0,0,0,0)");
+      hover.push("");
+    }
+  });
+
+  const trace = {
+    type: "bar",
+    orientation: "h",
+    x: xs,
+    y: ys,
+    marker: { color: colors, line: { width: 0 } },
+    hovertemplate: "%{customdata}<extra></extra>",
+    customdata: hover,
+    text: xs.map(v => v == null ? "н/д" : v.toFixed(1) + "%"),
+    textposition: "outside",
+    cliponaxis: false,
+  };
+
+  const infV = HURDLE[0][field];
+  const depV = HURDLE[1][field];
+
+  const shapes = [
+    { type: "line", xref: "x", yref: "paper", x0: infV, x1: infV, y0: 0, y1: 1,
+      line: { color: "#9ca3af", width: 1.5, dash: "dot" } },
+    { type: "line", xref: "x", yref: "paper", x0: depV, x1: depV, y0: 0, y1: 1,
+      line: { color: "#f59e0b", width: 1.8, dash: "dash" } },
+  ];
+  const annotations = [
+    { xref: "x", yref: "paper", x: infV, y: 1.06, text: `Инфляция ${infV.toFixed(1)}%`,
+      showarrow: false, font: { size: 11, color: "#374151" }, xanchor: "center",
+      bgcolor: "#ffffff", bordercolor: "#6b7280", borderwidth: 1, borderpad: 3 },
+    { xref: "x", yref: "paper", x: depV, y: 1.06, text: `Депозит ТОП-10 ${depV.toFixed(1)}%`,
+      showarrow: false, font: { size: 11, color: "#b45309" }, xanchor: "center",
+      bgcolor: "#fffbeb", bordercolor: "#b45309", borderwidth: 1, borderpad: 3 },
+  ];
+
+  const layout = {
+    margin: { l: 290, r: 60, t: 52, b: 40 },
+    height: 760,
+    xaxis: { title: HORIZON_LABEL[horizon], zeroline: true, zerolinecolor: "#9ca3af", gridcolor: "#eef0f3", ticksuffix: "%" },
+    yaxis: { automargin: false, tickfont: { size: 12 }, autorange: "reversed" },
+    shapes,
+    annotations,
+    showlegend: false,
+    paper_bgcolor: "#ffffff",
+    plot_bgcolor: "#ffffff",
+    bargap: 0.25,
+  };
+
+  Plotly.react("hurdle-chart", [trace], layout, { displayModeBar: false, responsive: true });
+}
+
+document.querySelectorAll("#hurdle-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#hurdle-tabs button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    buildHurdle(btn.dataset.h);
+  });
+});
+buildHurdle("cagr5");
+
+// ============ ALPHA HEAT-MAP ============
+function buildHeatmap() {
+  const funds = DATA.filter(d => !d.is_bench && !d.is_hurdle);
+  // Order by class, then by alpha-5y desc (NaNs last)
+  funds.sort((a, b) => {
+    const ca = CLASS_ORDER.indexOf(a.cls), cb = CLASS_ORDER.indexOf(b.cls);
+    if (ca !== cb) return ca - cb;
+    const alphaA = a.t5 == null ? -1e9 : a.t5 - BENCH[a.cls].t5;
+    const alphaB = b.t5 == null ? -1e9 : b.t5 - BENCH[b.cls].t5;
+    return alphaB - alphaA;
+  });
+
+  const yLabels = funds.map(f => f.name);
+  const colLabels = ["5 лет", "3 года", "YTD 2025"];
+  const fields = ["t5", "t3", "ytd"];
+  const z = funds.map(f => fields.map(fld => {
+    const v = f[fld];
+    if (v == null) return null;
+    const horiz = fld === "t5" ? "t5" : fld === "t3" ? "t3" : "ytd";
+    return +(v - BENCH[f.cls][horiz]).toFixed(2);
+  }));
+  const text = z.map(row => row.map(v => v == null ? "н/д" : (v > 0 ? "+" : "") + v.toFixed(1) + " пп"));
+
+  // Symmetric color scale
+  const flat = z.flat().filter(v => v != null);
+  const amax = Math.max(...flat.map(Math.abs));
+
+  const trace = {
+    type: "heatmap",
+    z, x: colLabels, y: yLabels.slice().reverse(),
+    // Plotly draws rows bottom-up; reverse y and z to match visual top-down order
+    customdata: text.slice().reverse(),
+    text: text.slice().reverse(),
+    texttemplate: "%{text}",
+    textfont: { size: 12 },
+    hovertemplate: "%{y} · %{x}<br>α = %{customdata}<extra></extra>",
+    colorscale: [[0, "#b91c1c"], [0.5, "#ffffff"], [1, "#15803d"]],
+    zmin: -amax, zmax: amax, zmid: 0,
+    showscale: true,
+    colorbar: { title: { text: "α, пп", side: "right" }, thickness: 12, len: 0.7, ticksuffix: " пп" },
+    xgap: 2, ygap: 2,
+  };
+  // Reverse z to match the reversed y labels
+  trace.z = z.slice().reverse();
+
+  const layout = {
+    margin: { l: 290, r: 80, t: 16, b: 40 },
+    height: Math.max(360, 28 * yLabels.length + 60),
+    xaxis: { side: "top" },
+    yaxis: { automargin: false, tickfont: { size: 12 } },
+    paper_bgcolor: "#ffffff", plot_bgcolor: "#ffffff",
+  };
+  Plotly.newPlot("heatmap", [trace], layout, { displayModeBar: false, responsive: true });
+}
+buildHeatmap();
+
+// ============ SCORECARD ============
+const HORIZONS = [
+  { key: "t5", label: "5 лет (общая)" },
+  { key: "t3", label: "3 года (общая)" },
+  { key: "ytd", label: "YTD 2025" },
+];
+const PROVIDERS = ["vim", "alfa", "sber"];
+const PROVIDER_SHORT = { vim: "ВИМ", alfa: "Альфа", sber: "Первая" };
+
+function bestForProvider(cls, provider, horizonKey) {
+  const rows = DATA.filter(d => d.cls === cls && d.provider === provider && d[horizonKey] != null);
+  return rows.length ? rows.reduce((a, b) => a[horizonKey] > b[horizonKey] ? a : b) : null;
+}
+
+// ============ CHAMPIONS (best fund per class × horizon, any provider) ============
+function buildChampions() {
+  const tbody = document.getElementById("champion-body");
+  tbody.innerHTML = "";
+  CLASS_ORDER.forEach(cls => {
+    const tr = document.createElement("tr");
+    const tdCls = document.createElement("td"); tdCls.textContent = cls; tr.appendChild(tdCls);
+    HORIZONS.forEach(h => {
+      const all = DATA.filter(d => d.cls === cls && !d.is_bench && !d.is_hurdle && d[h.key] != null);
+      all.sort((a, b) => b[h.key] - a[h.key]);
+      const td = document.createElement("td");
+      if (!all.length) {
+        td.className = "tie"; td.textContent = "н/д";
+      } else {
+        const champ = all[0];
+        const runner = all[1];
+        const cls_win = `win-${champ.provider}`;
+        td.className = cls_win;
+        const gap = runner ? (champ[h.key] - runner[h.key]) : null;
+        const gapStr = gap != null ? ` <span class="delta">+${gap.toFixed(1)} пп vs ближ.</span>` : "";
+        td.innerHTML = `${PROVIDER_SHORT[champ.provider]} ${champ[h.key].toFixed(1)}%${gapStr}` +
+                       `<span class="fund">${champ.name}</span>`;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+buildChampions();
+
+// ============ PAIRWISE SCORECARD (three providers) ============
+function buildScorecard() {
+  const tbody = document.getElementById("scorecard-body");
+  tbody.innerHTML = "";
+  CLASS_ORDER.forEach(cls => {
+    const tr = document.createElement("tr");
+    const tdCls = document.createElement("td"); tdCls.textContent = cls; tr.appendChild(tdCls);
+    HORIZONS.forEach(h => {
+      const bests = PROVIDERS.map(p => ({ p, row: bestForProvider(cls, p, h.key) }))
+                             .filter(x => x.row);
+      bests.sort((a, b) => b.row[h.key] - a.row[h.key]);
+      const td = document.createElement("td");
+      if (!bests.length) {
+        td.className = "tie"; td.textContent = "н/д";
+        tr.appendChild(td); return;
+      }
+      const winner = bests[0];
+      const runner = bests[1] || null;
+      td.className = `win-${winner.p}`;
+      const wVal = winner.row[h.key];
+      if (runner) {
+        const gap = wVal - runner.row[h.key];
+        if (Math.abs(gap) < 0.05) {
+          td.className = "tie";
+          td.innerHTML = `<b>Ничья</b> · ${wVal.toFixed(1)}% = ${runner.row[h.key].toFixed(1)}%`;
+        } else {
+          // List all in order: winner vs runner-up, with 3rd-place hint
+          const others = bests.slice(1).map(b => `${PROVIDER_SHORT[b.p]} ${b.row[h.key].toFixed(1)}%`).join(" · ");
+          td.innerHTML = `${PROVIDER_SHORT[winner.p]} +${gap.toFixed(1)} пп ` +
+                         `<span class="delta">${wVal.toFixed(1)}% · ${others}</span>`;
+        }
+      } else {
+        td.innerHTML = `${PROVIDER_SHORT[winner.p]} ${wVal.toFixed(1)}% ` +
+                       `<span class="delta">остальные н/д</span>`;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+buildScorecard();
+
+// ============ DATA TABLE ============
+function buildTable(sortKey = null, asc = true) {
+  const tbody = document.getElementById("data-tbody");
+  tbody.innerHTML = "";
+  // Group order: Hurdle, Акции, Облигации, Смешанные, Денежный рынок
+  const groups = ["Hurdle", ...CLASS_ORDER];
+  groups.forEach(g => {
+    let rows = DATA.filter(d => (g === "Hurdle" ? d.is_hurdle : d.cls === g));
+    if (g === "Hurdle") {
+      // keep order
+    } else if (sortKey) {
+      rows.sort((a,b) => {
+        const av = a[sortKey], bv = b[sortKey];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (typeof av === "string") return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+        return asc ? av - bv : bv - av;
+      });
+    } else {
+      // default: benchmark first, then funds by t5 desc
+      rows = rows.slice().sort((a,b) => {
+        if (a.is_bench !== b.is_bench) return a.is_bench ? -1 : 1;
+        const av = a.t5 ?? -1e9, bv = b.t5 ?? -1e9;
+        return bv - av;
+      });
+    }
+    if (g !== "Hurdle") {
+      const grp = document.createElement("tr");
+      grp.className = "group";
+      const td = document.createElement("td"); td.colSpan = 6; td.textContent = g; grp.appendChild(td);
+      tbody.appendChild(grp);
+    }
+    // Identify champion of the asset-class block (any provider) by 5y total
+    let champion5y = null;
+    if (g !== "Hurdle") {
+      const ranked = rows.filter(r => !r.is_bench && r.t5 != null);
+      if (ranked.length) champion5y = ranked.reduce((a, b) => a.t5 > b.t5 ? a : b);
+    }
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      const classes = [];
+      if (r.is_bench) classes.push("benchmark");
+      if (r.is_hurdle) classes.push("hurdle");
+      if (champion5y && r === champion5y) classes.push("champion");
+      if (classes.length) tr.className = classes.join(" ");
+      tr.appendChild(cell(r.name, "name"));
+      tr.appendChild(cell(PROVIDER_LABEL[r.provider], "provider " + r.provider));
+      tr.appendChild(cell(fmt(r.t5),  "num"));
+      tr.appendChild(cell(fmt(r.c5),  "num"));
+      tr.appendChild(cell(fmt(r.t3),  "num"));
+      tr.appendChild(cell(fmt(r.ytd), "num"));
+      tbody.appendChild(tr);
+    });
+  });
+}
+function cell(txt, cls) {
+  const td = document.createElement("td");
+  td.className = cls || "";
+  td.textContent = txt;
+  return td;
+}
+function fmt(v) { return v == null ? "н/д" : v.toFixed(2) + "%"; }
+
+let sortState = { key: null, asc: false };
+document.querySelectorAll("#data-table th").forEach(th => {
+  th.addEventListener("click", () => {
+    const k = th.dataset.sort;
+    if (sortState.key === k) sortState.asc = !sortState.asc;
+    else { sortState.key = k; sortState.asc = false; }
+    buildTable(sortState.key, sortState.asc);
+  });
+});
+buildTable();
+</script>
+</body>
+</html>
